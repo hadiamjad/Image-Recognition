@@ -53,6 +53,13 @@ def selection(old_population, new_population):
                 # Set the flag to True so we'll loop again
                 swapped = True
 
+    for m in range(50):
+        new_population[m] = old_population[m]
+
+# cross over
+def crossOver(old_population, new_population):
+    for i in range(20):
+        t = random.randint(0,20)
 
 
 
