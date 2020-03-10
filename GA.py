@@ -109,7 +109,7 @@ def mutation(old_population, new_population):
 
 
 # GA
-def GeneticAlgorithm(generations):
+def GeneticAlgorithm():
     old_population = createPopulation(100)
     new_population = []
 
@@ -130,4 +130,4 @@ def GeneticAlgorithm(generations):
         new_population = []
 
 
-GeneticAlgorithm(1000)
+GeneticAlgorithm()
