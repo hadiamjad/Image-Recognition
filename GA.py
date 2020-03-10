@@ -1,6 +1,35 @@
 import numpy as np
 import cv2
-import random
+from numpy import random
+
+
+class Chromosome:
+    def __init__(self, fitness, pop):
+        self.fitness = fitness
+        self.pop = pop
+
+    def setFitness(self, fitness):
+        self.fitness = fitness
+
+    def getPop(self):
+        return self.pop
+
+    def getFitness(self):
+        return self.fitness
+
+
+
+    def __lt__(self, other):
+        flag = False
+        if self.fitness < other.fitness:
+            flag = True
+        return flag
+
+    def __gt__(self, other):
+        flag = False
+        if self.fitness > other.fitness:
+            flag = True
+        return flag
 
 
 # function to get image
@@ -13,7 +42,7 @@ def getImage():
 
 # random number generator
 def randomNumber():
-    return random.randint(0, 256)
+    return np.random.randint(0, 255)       # return value in [low,high)
 
 
 # it generates random population of size 'n'
@@ -21,81 +50,62 @@ def createPopulation(n):
     population = []
 
     for k in range(n):
-        x = np.zeros((110, 77))
-        for i in range(110):
-            for j in range(77):
-                x[i][j] = randomNumber()
-        population.append(x)
+        x = np.random.randint(0, 256, (110, 77))        # generate random numbers in [low, high)
+        c = Chromosome(0, x)
+        population.append(c)
 
     return population
 
-
 # evaluation function
 def evaluation(target, choice):
-    value = 0
-    for i in range(110):
-        for j in range(77):
-            value += target[i][j] - choice[i][j]
+
+    value = np.sum(np.abs(np.subtract(target, choice)))
     return value
 
 
 # selection
-def selection(old_population, new_population, target, fittest):
-    fitness = [0] * len(old_population)
-    for i in range(len(old_population) - 1):
-        fitness[i] = evaluation(target, old_population[i])
+def selection(old_population, new_population, target):
 
-    # sorting acc. to fitness value
-    swapped = True
-    while swapped:
-        swapped = False
-        for i in range(len(fitness) - 1):
-            if fitness[i] > fitness[i + 1]:
-                # Swaping the elements
-                fitness[i], fitness[i + 1] = fitness[i + 1], fitness[i]
-                old_population[i], old_population[i + 1] = old_population[i + 1], old_population[i]
-                # Set the flag to True so we'll loop again
-                swapped = True
+    for i in range(len(old_population)):
+        old_population[i].setFitness(evaluation(target, old_population[i].getPop()))
 
-    fittest[0] = evaluation(target, old_population[0])
-    for m in range(50):
+    old_population.sort(key=lambda individual: individual.fitness)
+    fittest = old_population[0].getFitness()
+
+    for m in range(30):
         new_population.append(old_population[m])
+    return fittest
 
 
 # cross over
-def crossOver(old_population, new_population, target, fittest):
-    for i in range(20):
-        t = random.randint(0, 50)
-        m = old_population[t]
-        t2 = random.randint(0, 50)
-        m2 = old_population[t2]
+def crossOver(old_population, new_population):
+    for i in range(30):
+        t = np.random.randint(30, 100)
+        m = old_population[t].getPop()
+        t2 = np.random.randint(30, 100)
+        m2 = old_population[t2].getPop()
 
         i = 0
-        while i < 110:
+        while i < 110/2:
             for j in range(77):
-                m[i][j], m2[i][j] = m2[i][j], m[i][j]
-            i = i + 2
+                m[i][j], m2[109-i][j] = m2[109-i][j], m[i][j]
+            i += 1
 
-        if fittest[0] > evaluation(target, m):
-            fittest[0] = evaluation(target, m)
-        if fittest[0] > evaluation(target, m2):
-            fittest[0] = evaluation(target, m2)
-        new_population.append(m)
-        new_population.append(m2)
+        new_population.append(old_population[t])
+        new_population.append(old_population[t2])
 
 
 # mutation
-def mutation(old_population, new_population, target, fittest):
+def mutation(old_population, new_population):
     for i in range(10):
-        t = random.randint(0, 50)
-        m = old_population[t]
-        for i in range(110):
-            for j in range(77):
-                m[i][j] = abs(255 - m[i][j])
+        t = np.random.randint(0, 100)               # pick a random member of the population
+        m = old_population[t].getPop()
 
-        if fittest[0] > evaluation(target, m):
-            fittest[0] = evaluation(target, m)
-        new_population.append(m)
+        row = np.random.randint(0, 110)            # random selection of a pixel
+        col = np.random.randint(0, 77)
+        m[row][col] = np.random.randint(0, 256)
+
+        new_population.append(old_population[t])
 
 
 # GA
@@ -104,15 +114,18 @@ def GeneticAlgorithm(generations):
     new_population = []
 
     target = getImage()
-    fittest = [-1]
+    fittest = -1
+    maxfit = 9999999
 
     i = 0
-    while i < generations and fittest[0] != 0:
-        selection(old_population, new_population, target, fittest)
-        crossOver(old_population, new_population, target, fittest)
-        mutation(old_population, new_population, target, fittest)
-        print("Generation " + str(i) + " Fittest: " + str(fittest))
-        i = i + 1
+    while maxfit != 0:
+        fittest = selection(old_population, new_population, target)
+        crossOver(old_population, new_population)
+        mutation(old_population, new_population)
+        if fittest < maxfit:
+            print("Generation " + str(i) + " Fittest: " + str(fittest))
+            maxfit = fittest
+        i += 1
         old_population = new_population
         new_population = []
 
