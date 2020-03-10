@@ -53,7 +53,7 @@ def selection(old_population, new_population, target, fittest):
             if fitness[i] > fitness[i + 1]:
                 # Swaping the elements
                 fitness[i], fitness[i + 1] = fitness[i + 1], fitness[i]
-                old_population[i], old_population[i + 1] = old_population[i + 1], old_population[i + 1]
+                old_population[i], old_population[i + 1] = old_population[i + 1], old_population[i]
                 # Set the flag to True so we'll loop again
                 swapped = True
 
@@ -78,7 +78,7 @@ def crossOver(old_population, new_population, target, fittest):
 
         if fittest[0] > evaluation(target, m):
             fittest[0] = evaluation(target, m)
-        elif fittest[0] > evaluation(target, m2):
+        if fittest[0] > evaluation(target, m2):
             fittest[0] = evaluation(target, m2)
         new_population.append(m)
         new_population.append(m2)
@@ -104,10 +104,10 @@ def GeneticAlgorithm(generations):
     new_population = []
 
     target = getImage()
-    fittest = [0]
+    fittest = [-1]
 
     i = 0
-    while i < generations and fittest != 0:
+    while i < generations and fittest[0] != 0:
         selection(old_population, new_population, target, fittest)
         crossOver(old_population, new_population, target, fittest)
         mutation(old_population, new_population, target, fittest)
