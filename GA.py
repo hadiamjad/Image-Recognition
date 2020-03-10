@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 from numpy import random
-
+import copy
 
 class Chromosome:
     def __init__(self, fitness, pop):
@@ -72,17 +72,17 @@ def selection(old_population, new_population, target):
     old_population.sort(key=lambda individual: individual.fitness)
     fittest = old_population[0].getFitness()
 
-    for m in range(30):
-        new_population.append(old_population[m])
+    for m in range(10):
+        new_population.append(copy.deepcopy(old_population[m]))
     return fittest
 
 
 # cross over
 def crossOver(old_population, new_population):
-    for i in range(30):
-        t = np.random.randint(30, 100)
+    for i in range(40):
+        t = np.random.randint(0, 100)
         m = old_population[t].getPop()
-        t2 = np.random.randint(30, 100)
+        t2 = np.random.randint(0, 100)
         m2 = old_population[t2].getPop()
 
         i = 0
@@ -91,21 +91,21 @@ def crossOver(old_population, new_population):
                 m[i][j], m2[109-i][j] = m2[109-i][j], m[i][j]
             i += 1
 
-        new_population.append(old_population[t])
-        new_population.append(old_population[t2])
+        new_population.append(copy.deepcopy(old_population[t]))
+        new_population.append(copy.deepcopy(old_population[t2]))
 
 
 # mutation
 def mutation(old_population, new_population):
-    for i in range(10):
+    for i in range(100):
         t = np.random.randint(0, 100)               # pick a random member of the population
         m = old_population[t].getPop()
-
-        row = np.random.randint(0, 110)            # random selection of a pixel
-        col = np.random.randint(0, 77)
-        m[row][col] = np.random.randint(0, 256)
-
-        new_population.append(old_population[t])
+        k = random.randint(0, 10)
+        if k < 10:
+            row = np.random.randint(0, 110)            # random selection of a pixel
+            col = np.random.randint(0, 77)
+            m[row][col] = np.random.randint(0, 256)
+            new_population.append(copy.deepcopy(old_population[t]))
 
 
 # GA
