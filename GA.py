@@ -3,6 +3,9 @@ import cv2
 from numpy import random
 import copy
 
+
+init_cost = 9999999
+
 class Chromosome:
     def __init__(self, fitness, pop):
         self.fitness = fitness
@@ -16,8 +19,6 @@ class Chromosome:
 
     def getFitness(self):
         return self.fitness
-
-
 
     def __lt__(self, other):
         flag = False
@@ -40,11 +41,6 @@ def getImage():
     return temp
 
 
-# random number generator
-def randomNumber():
-    return np.random.randint(0, 255)       # return value in [low,high)
-
-
 # it generates random population of size 'n'
 def createPopulation(n):
     population = []
@@ -56,78 +52,86 @@ def createPopulation(n):
 
     return population
 
+
 # evaluation function
 def evaluation(target, choice):
-
+    value = 0
     value = np.sum(np.abs(np.subtract(target, choice)))
     return value
 
 
 # selection
-def selection(old_population, new_population, target):
+def selection(old_population, target):
+    global init_cost
 
     for i in range(len(old_population)):
         old_population[i].setFitness(evaluation(target, old_population[i].getPop()))
 
     old_population.sort(key=lambda individual: individual.fitness)
     fittest = old_population[0].getFitness()
+    if init_cost == 9999999:
+        init_cost = fittest
 
-    for m in range(10):
-        new_population.append(copy.deepcopy(old_population[m]))
-    return fittest
+    return fittest, old_population[:20]
 
 
 # cross over
-def crossOver(old_population, new_population):
-    for i in range(40):
-        t = np.random.randint(0, 100)
-        m = old_population[t].getPop()
-        t2 = np.random.randint(0, 100)
-        m2 = old_population[t2].getPop()
-
-        i = 0
-        while i < 110/2:
-            for j in range(77):
-                m[i][j], m2[109-i][j] = m2[109-i][j], m[i][j]
-            i += 1
-
-        new_population.append(copy.deepcopy(old_population[t]))
-        new_population.append(copy.deepcopy(old_population[t2]))
+def crossOver(old_population):
+    crossover = []
+    for i in range(60):
+        t = np.random.randint(0, 50)
+        m = old_population[t:t+1]
+        t2 = np.random.randint(0, 50)
+        m2 = old_population[t2:t2+1]
+        p = m[0].getPop()
+        p2 = m2[0].getPop()
+        child = np.zeros((110, 77))
+        child[:54][:76] = p[:54][:76]
+        child[54:][:76] = p2[54:][:76]
+        ind = Chromosome(0,child)
+        crossover.append(ind)
+    return crossover[:]
 
 
 # mutation
-def mutation(old_population, new_population):
-    for i in range(100):
-        t = np.random.randint(0, 100)               # pick a random member of the population
-        m = old_population[t].getPop()
-        k = random.randint(0, 10)
-        if k < 10:
-            row = np.random.randint(0, 110)            # random selection of a pixel
-            col = np.random.randint(0, 77)
-            m[row][col] = np.random.randint(0, 256)
-            new_population.append(copy.deepcopy(old_population[t]))
+def mutation(old_population):
+    mutation = []
+    for i in range(10):
+        t = np.random.randint(0, 60)               # pick a random member of the population
+        m = copy.copy(old_population[t].getPop())
+        row = np.random.randint(0, 110)            # random selection of a pixel
+        col = np.random.randint(0, 77)
+        m[row][col] = np.random.randint(0, 256)
+        ind = Chromosome(0, m)
+        mutation.append(ind)
+    return mutation
 
 
 # GA
 def GeneticAlgorithm():
     old_population = createPopulation(100)
     new_population = []
-
+    crossover = []
     target = getImage()
+    global init_cost
     fittest = -1
-    maxfit = 9999999
-
+    maxfit = 999999
+    accuracy = 0.0
     i = 0
-    while maxfit != 0:
-        fittest = selection(old_population, new_population, target)
-        crossOver(old_population, new_population)
-        mutation(old_population, new_population)
+    while accuracy < 99.0:
+        fittest, best_old = selection(old_population, target)
+        new_population.extend(best_old)
+        crossover.extend(crossOver(old_population))
+        new_population.extend(crossover)
+        new_population.extend(mutation(crossover))
         if fittest < maxfit:
-            print("Generation " + str(i) + " Fittest: " + str(fittest))
+            accuracy = ((init_cost - maxfit)/init_cost) * 100
+            print("Generation " + str(i) + " Fittest: " + str(fittest) + " Accuracy: " + str( accuracy))
             maxfit = fittest
         i += 1
         old_population = new_population
         new_population = []
+        crossover = []
 
 
 GeneticAlgorithm()
